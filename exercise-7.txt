@@ -1,0 +1,116 @@
+# Q1: What do different columns in the output of EXPLAIN mean?
+
+Column        : Meaning
+id            : a sequential identifier for each SELECT within the query (for when you have nested subqueries).
+select_type   : the type of SELECT query.
+table         : the table referred to by the row
+type          : how MySQL joins the tables used.
+possible_keys : shows the keys that can be used by MySQL to find rows from the table, though they may or may not be used in practice.
+key           : indicates the actual index used by MySQL.
+key_len       : ndicates the length of the index the Query Optimizer chose to use.
+ref           : Shows the columns or constants that are compared to the index named in the key column. 
+rows          : lists the number of records that were examined to produce the output.
+Extra         : contains additional information regarding the query execution plan.
+
+
+# What possible values can those have?
+# What is the meaning of those values?
+
+Column: id
+Possible Value(s):
+
+Column: select_type
+Possible Value(s):
+  SIMPLE – the query is a simple SELECT query without any subqueries or UNIONs
+  PRIMARY – the SELECT is in the outermost query in a JOIN
+  DERIVED – the SELECT is part of a subquery within a FROM clause
+  SUBQUERY – the first SELECT in a subquery
+  DEPENDENT SUBQUERY – a subquery which is dependent upon on outer query
+  UNCACHEABLE SUBQUERY – a subquery which is not cacheable (there are certain conditions for a query to be cacheable)
+  UNION – the SELECT is the second or later statement of a UNION
+  DEPENDENT UNION – the second or later SELECT of a UNION is dependent on an outer query
+  UNION RESULT – the SELECT is a result of a  UNION
+
+Column: type
+Possible Value(s):
+  system – the table has only zero or one row
+  const – the table has only one matching row which is indexed. This is the fastest type of join because the table only has to be read once and the column’s value can be treated as a constant when joining other tables.
+  eq_ref – all parts of an index are used by the join and the index is PRIMARY KEY or UNIQUE NOT NULL. This is the next best possible join type.
+  ref – all of the matching rows of an indexed column are read for each combination of rows from the previous table. This type of join appears for indexed columns compared using = or <=> operators.
+  fulltext – the join uses the table’s FULLTEXT index.
+  ref_or_null – this is the same as ref but also contains rows with a null value for the column.
+  index_merge – the join uses a list of indexes to produce the result set. The key column of EXPLAIN‘s output will contain the keys used.
+  unique_subquery – an IN subquery returns only one result from the table and makes use of the primary key.
+  index_subquery – the same as unique_subquery but returns more than one result row.
+  range – an index is used to find matching rows in a specific range, typically when the key column is compared to a constant using operators like BETWEEN, IN, >, >=, etc.
+  index – the entire index tree is scanned to find matching rows.
+  all – the entire table is scanned to find matching rows for the join. This is the worst join type and usually indicates the lack of appropriate indexes on the table.
+
+Column: Extra
+Possible Valus(s):
+  Distinct – Server is able to perform an optimization where it will stop searching for more rows for the current row combination after it has found the first matching row
+  Not exists – Server is able to do a LEFT JOIN optimization where it will not examine more rows in this table for the current row combination after it finds one row that matches the JOIN criteria
+  range checked for each record – Server found no good index to use, but checks indexes for each row. Slow, but faster than a full table scan.
+  Using filesort – Server will need to do an extra pass to sort the rows.
+  Using index – Server is able to return rows directly from the index instead of doing an additional seek to read the actual rows. Generally good news.
+  Using temporary – Server will need to create a temporary table to hold results. Often occurs with differing GROUP BY and ORDER BY columns.
+  Using where – Server is using values in the WHERE clause to limit returned rows.
+
+# Q2
+# 2.1 The value under 'rows' column in the output of EXPLAIN query and SELECT query after it are same. What does it mean?
+  After executing the SELECT query and have the result is the same, it means that the entire table was traversed to execute the query and “All” type was used.
+
+# 2.2 Is the SELECT query optimal? If no, how do we optimize it?
+  No the select query is not optimal. We can make it optimal by adding an index to user_id since it will be having maximum lookup.
+
+# Q3
+
+# Q4
+# Q4.1 EXPLAIN a SELECT query against one of your databases which employs an INNER JOIN between two tables. What does the output look like? What does the values under different columns mean? Do you get only one row in EXPLAIN's output?
+  
+EXPLAIN SELECT title as 'Article Titles' FROM Articles INNER JOIN Users  ON Articles.user_id = Users.id WHERE name = 'User3';
++----+-------------+----------+------+---------------+---------+---------+---------------+------+-------------+
+| id | select_type | table    | type | possible_keys | key     | key_len | ref           | rows | Extra       |
++----+-------------+----------+------+---------------+---------+---------+---------------+------+-------------+
+|  1 | SIMPLE      | Users    | ALL  | PRIMARY       | NULL    | NULL    | NULL          |    5 | Using where |
+|  1 | SIMPLE      | Articles | ref  | user_id       | user_id | 4       | blog.Users.id |    1 |             |
++----+-------------+----------+------+---------------+---------+---------+---------------+------+-------------+
+2 rows in set (0.01 sec)
+
+ROW1
+
+1) id = 1 the first select within the query was used.
+2) select_type: Simple - Simple select was used.
+3) table: Users - This row refers to Users table.
+4) type: All - A full table scan is performed to resolve query.
+5) possible key: PRIMARY - the SELECT is in the outermost query in a JOIN
+6) key: NULL - No index was used by server
+7) key_len: NULL - no key was used so NULL length
+8) ref: NULL - No column or constant were used with the key to find the row.
+9) Rows: 5 - mysql believes it will examine 5 rows of this table to execute query.
+10) Extra: Using where – Where clause was used to restict number of matching rows.
+
+Row 2:
+1) id = 1 - The first select within the query was used.
+2) Select type : Simple - Simple select was used.
+3) Table :  Articles - This row refers to holdings table.
+4) Type : ref - Several rows may be read from the table for each combination of rows.
+5) possible key : user_id - user_id is the possible index found by server.
+6) key : user_id - user_id is the possible index found by server.
+7) key_leng : NULL - 4 bits of index row are used.
+8) ref :  blog.Users.id - the id column of the Users table used with the key to find the row.
+9) Rows: 1 - mysql believes it will examine 1 row of this table to execute query.
+10) Extra:
+
+# 4.2 From the same select query in above question using a subquery instead of a JOIN. What does the EXPLAIN output look like now? Which query is better and why?
+mysql> EXPLAIN SELECT title FROM Articles WHERE Articles.user_id IN ( SELECT Users.id FROM Users WHERE Users.name = 'User3') ORDER BY title DESC;
++----+--------------------+----------+-----------------+---------------+---------+---------+------+------+-----------------------------+
+| id | select_type        | table    | type            | possible_keys | key     | key_len | ref  | rows | Extra                       |
++----+--------------------+----------+-----------------+---------------+---------+---------+------+------+-----------------------------+
+|  1 | PRIMARY            | Articles | ALL             | NULL          | NULL    | NULL    | NULL |   10 | Using where; Using filesort |
+|  2 | DEPENDENT SUBQUERY | Users    | unique_subquery | PRIMARY       | PRIMARY | 4       | func |    1 | Using where                 |
++----+--------------------+----------+-----------------+---------------+---------+---------+------+------+-----------------------------+
+2 rows in set (0.00 sec)
+
+INNER JOIN query is better than the subquery since the select type used in it is simple select. The rows sum is 11 for subquery against 6 for INNER JOIN. 
+This makes INNER JOIN query faster.
