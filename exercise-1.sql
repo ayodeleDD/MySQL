@@ -4,7 +4,7 @@ CREATE TABLE Branch (
   bCode CHAR(2) NOT NULL,
   libarian VARCHAR(20) NOT NULL,
   address VARCHAR(50) NOT NULL,
-  PRIMARY KEY(BCode)
+  PRIMARY KEY(bCode)
 );
 
 CREATE TABLE Titles (
@@ -23,13 +23,13 @@ CREATE TABLE Holdings (
 );
 
 INSERT INTO Branch
-VALUES 
+VALUES
 ('B1', 'John Smith', '2 Anglesea Rd'),
 ('B2', 'Mary Jones', '34 Pearse St'),
 ('B3', 'Francis Owens', 'Grange X');
 
-INSERT INTO Holdings 
-VALUES 
+INSERT INTO Holdings
+VALUES
 ('B1', 'Susannah', 3),
 ('B1', 'How to Fish', 2),
 ('B1', 'A History of Dublin', 1),
@@ -41,8 +41,8 @@ VALUES
 ('B3', 'Susannah', 3),
 ('B3', 'The Wife', 1);
 
-INSERT INTO Titles 
-VALUES 
+INSERT INTO Titles
+VALUES
 ('Susannah', 'Ann Brown', 'Macmillan'),
 ('How to Fish', 'Amy Fly', 'Stop Press'),
 ('A History of Dublin', 'David Little', 'Wiley'),
@@ -57,8 +57,8 @@ FROM Titles
 WHERE publisher = 'Macmillan';
 
 # (ii) branches that hold any books by Ann Brown (using a nested subquery).
-SELECT DISTINCT branch 
-FROM Holdings 
+SELECT DISTINCT branch
+FROM Holdings
 WHERE title IN (
   SELECT title
   FROM Titles
@@ -66,10 +66,10 @@ WHERE title IN (
 );
 
 # (iii) branches that hold any books by Ann Brown (without using a nested subquery).
-SELECT DISTINCT branch 
-FROM Holdings 
+SELECT DISTINCT branch
+FROM Holdings
 INNER JOIN Titles
-ON Holdings.title = Titles.title 
+ON Holdings.title = Titles.title
 AND Titles.author = 'Ann Brown';
 
 # (iv) the total number of books held at each branch.

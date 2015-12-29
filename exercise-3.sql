@@ -1,5 +1,5 @@
-# Design a table structure for following conditions: 
-# A user can write many articles. Each written article will fall under one category. 
+# Design a table structure for following conditions:
+# A user can write many articles. Each written article will fall under one category.
 # Remember that many articles can be written under same category. The users can be of two types admin or normal. A user can post multiple comments on an article.
 
 CREATE DATABASE blog;
@@ -39,8 +39,8 @@ CREATE TABLE Articles (
   PRIMARY KEY(id)
 );
 
-INSERT INTO Users (type, name) VALUES 
-('admin', 'user1'), 
+INSERT INTO Users (type, name) VALUES
+('admin', 'user1'),
 ('normal', 'user2'),
 ('admin', 'user3'),
 ('normal', 'user4'),
@@ -67,7 +67,7 @@ INSERT INTO Articles (user_id, category_id, title) VALUES
 (4, 2, 'What Defines GREAT Company Culture?'),
 (3, 1, '3 Qualities of Successful Ph.D. Students.');
 
-INSERT INTO Comments (user_id, article_id, comment) VALUES 
+INSERT INTO Comments (user_id, article_id, comment) VALUES
 (2, 1, 'Comment 1'),
 (2, 2, 'Comment 11'),
 (2, 2, 'Comment 12'),
@@ -83,14 +83,14 @@ INSERT INTO Comments (user_id, article_id, comment) VALUES
 
 # (i)select all articles whose author's name is user3 (Do this exercise using variable also).
 SELECT title as 'Article Titles'
-FROM Articles INNER JOIN Users 
+FROM Articles INNER JOIN Users
 ON Articles.user_id = Users.id
 WHERE name = 'User3';
 
 # Using variable:
 SET @user_id = (
   SELECT id
-  FROM Users 
+  FROM Users
   WHERE name = 'User3'
 );
 
@@ -109,30 +109,33 @@ ON Comments.article_id = Articles.id WHERE Users.name = 'User3';
 SELECT Articles.title AS 'Article Title', Comments.comment AS 'Comments'
 FROM Articles INNER JOIN Users
 ON Articles.user_id = Users.id INNER JOIN Comments
-ON Comments.article_id = Articles.id WHERE Users.name IN (
-  SELECT name FROM Users 
+ON Comments.article_id = Articles.id WHERE Users.id IN (
+  SELECT id FROM Users
   WHERE name = 'user3'
 );
 
 # Write a query to select all articles which do not have any comments (Do using subquery also)
-SELECT title FROM Comments 
-INNER JOIN Articles 
-ON Comments.article_id = Articles.id
+SELECT title FROM Articles
+LEFT JOIN Comments
+ON Articles.id = Comments.article_id
 WHERE comment IS NULL;
 
 SELECT title FROM Articles
-WHERE id IN (
+WHERE NOT EXISTS (
   SELECT article_id
   FROM Comments
-  WHERE comment IS NULL
+  WHERE Comments.article_id = Articles.id
 );
 
 # Write a query to select article which has maximum comments
-SELECT Articles.id, Articles.user_id AS 'Article Writer', Articles.title,
-COUNT(Comments.comment) as Number_of_Comment
-FROM Articles INNER JOIN Comments ON Articles.id = Comments.article_id 
-GROUP BY Comments.article_id 
-ORDER BY Number_of_Comment DESC LIMIT 1;
+SELECT article_id AS 'Article ID', MAX(count) AS 'Comment Count'
+FROM (
+  SELECT Comments.article_id, COUNT(Comments.article_id) AS count
+  FROM Articles
+  INNER JOIN Comments ON Articles.id = Comments.article_id
+  GROUP BY Comments.article_id
+  ORDER BY COUNT( Comments.article_id ) DESC
+) AS Max_Count;
 
 # Write a query to select article which does not have more than one comment by the same user (do this using left join and group by)
 SELECT Articles.title, COUNT(Comments.comment) AS 'Comment Count'

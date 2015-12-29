@@ -1,6 +1,6 @@
 # We ran a campaign on a website, asking
 # people to submit their email address, their city and phone number.The data was
-# collected in a csv format The file is here... 
+# collected in a csv format The file is here...
 # http://dl.dropbox.com/u/628209/exercises/mysql/email_subscribers.txtFirst import this csv data into a mysql datbase.
 
 CREATE DATABASE email_campaign;
@@ -19,7 +19,7 @@ CREATE TABLE Subcribers (
 mysql --local-infile -u root -p
 
 LOAD DATA LOCAL INFILE '~/Desktop/email_subscribers.txt'
-INTO TABLE Subscribers FIELDS TERMINATED BY ',' 
+INTO TABLE Subscribers FIELDS TERMINATED BY ','
 (email_address, phone_number, city);
 
 # From the database, we need to find the following information by
@@ -34,11 +34,13 @@ COUNT(city) FROM Subscribers
 GROUP BY city;
 
 # Which city were the maximum respondents from?
-SELECT city AS City,
-COUNT(city) AS Number_of_Replies
-FROM Subscribers
-GROUP BY city
-ORDER BY Number_of_Replies DESC LIMIT 1;
+SELECT city, MAX(Number_of_Replies)
+FROM (
+	SELECT city, COUNT(city) AS Number_of_Replies
+	FROM Subscribers
+	GROUP BY Subscribers.city
+	ORDER BY Number_of_Replies DESC
+) AS City_Count;
 
 # What all email domains did people respond from?
 SELECT email_address,
